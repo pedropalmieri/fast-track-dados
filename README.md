@@ -2,15 +2,51 @@
 
 Projeto do desafio de Engenharia de Dados da Compass UOL (FT03 – Projeto 1).
 
-## Visão geral
+## Cenário do projeto
 
-O desafio propõe a construção de um pipeline de extração, transformação e disponibilização de dados usando Python e SQL. O objetivo é simular cenários reais de Engenharia de Dados, com foco em organização, qualidade, resiliência e reprodutibilidade.
+O projeto construirá um panorama da produção científica brasileira indexada pelo OpenAlex: sua evolução ao longo do tempo, distribuição por instituições e localização (municípios, estados e regiões) e áreas de pesquisa. O pipeline cruzará duas APIs públicas de domínios distintos e trabalhará com respostas JSON.
 
-## Requisitos técnicos
+### Fontes de dados
+
+| Fonte | Domínio | Dados utilizados |
+|---|---|---|
+| [OpenAlex API](https://help.openalex.org/api/) | Produção científica | Trabalhos, ano de publicação, tópicos, citações, acesso aberto e afiliações/instituições |
+| [API de Localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) | Geografia oficial | Códigos e hierarquia de municípios, estados e regiões brasileiras |
+
+O período será definido com base nos anos completos disponíveis no OpenAlex; o ano mais recente poderá ser excluído se ainda estiver incompleto. Serão considerados trabalhos com pelo menos uma afiliação brasileira. A associação geográfica será feita a partir dos metadados de localização das instituições no OpenAlex e normalizada com os códigos do IBGE; registros sem correspondência serão identificados no relatório de qualidade, não descartados silenciosamente.
+
+### Pergunta e indicadores
+
+**Pergunta:** como evoluiu a produção científica associada a instituições brasileiras e como ela se distribui entre instituições, municípios, estados, regiões e áreas de pesquisa?
+
+- **Produção nacional por ano:** número de trabalhos distintos com pelo menos uma afiliação brasileira.
+- **Distribuição geográfica:** trabalhos distintos associados a cada município, estado e região, além da participação de cada localidade no total nacional.
+- **Produção por instituição:** número de trabalhos distintos associados a cada instituição brasileira por ano.
+- **Evolução e áreas de pesquisa:** variação anual da produção e sua distribuição pelos tópicos classificados pelo OpenAlex.
+- **Acesso aberto e citações:** proporção de trabalhos em acesso aberto e contagem de citações como métricas descritivas, não como medidas isoladas de qualidade.
+
+Os indicadores representam a produção indexada pelo OpenAlex, não toda a pesquisa realizada no país. Um trabalho com afiliações em mais de um município, estado ou região será contado em cada localidade correspondente; por isso, os totais geográficos não são necessariamente somáveis ao total nacional. As localizações podem estar ausentes ou imprecisas. Volume de publicações, tópicos e citações não medem, por si só, qualidade acadêmica, qualidade do ensino universitário ou impacto de políticas de incentivo.
+
+O escopo mede produção científica vinculada a instituições brasileiras em todas as áreas, incluindo educação quando identificada pelos tópicos do OpenAlex. Não mede financiamento ou incentivos à pesquisa: essa análise exigiria uma fonte adicional específica, com dados programáticos e cobertura verificáveis.
+
+### Fluxo proposto
+
+1. Consultar a API do OpenAlex com filtros de país e período, obtendo trabalhos e afiliações com paginação.
+2. Consultar a API de Localidades do IBGE para obter códigos e hierarquias geográficas oficiais.
+3. Desaninhar as afiliações, padronizar datas, identificadores e localidades; registrar associações não resolvidas.
+4. Deduplicar por identificador de trabalho e agregar a produção por ano, instituição e localidade.
+5. Cruzar as localidades com a hierarquia do IBGE, calcular indicadores e validar schema, nulidade, unicidade e intervalos.
+6. Exportar o relatório de qualidade e salvar os dados finais em Parquet particionado por ano.
+
+A API de Localidades do IBGE é pública. O OpenAlex permite consultas sem chave dentro de um orçamento compartilhado limitado; para execução reproduzível, recomenda-se configurar uma chave própria por meio da variável de ambiente `OPENALEX_API_KEY`. Credenciais nunca devem ser versionadas.
+
+## Requisitos técnicos do desafio
+
+O desafio propõe a construção de um pipeline de extração, transformação e disponibilização de dados usando Python e SQL, com foco em organização, qualidade, resiliência e reprodutibilidade.
 
 ### Extração de dados e APIs
 
-- Consumir dados de pelo menos duas APIs públicas de domínios distintos.
+- Consumir dados de pelo menos duas APIs públicas de domínios distintos, conforme o cenário acima.
 - Implementar controle de taxa de requisições (rate limiting), retentativas e tratamento de erros.
 - Gerenciar credenciais por variáveis de ambiente (por exemplo, com `.env` ou `os.getenv`) e não versionar chaves de API.
 
