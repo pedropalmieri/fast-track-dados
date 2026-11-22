@@ -1,10 +1,16 @@
 # Produção científica brasileira com Python e SQL
 
-Desafio FT03 - Projeto 1, da trilha de dados da Compass UOL.
+Desafio FT03 - Projeto 1, como prática após a **Trilha Engenharia de Dados POD TILLER**, disponibilizada pela Compass UOL na Udemy.
 
 A ideia é olhar para os trabalhos ligados a instituições brasileiras: como a contagem muda por ano e onde aparecem as instituições, cidades e temas de pesquisa. Para isso, juntei dados do OpenAlex com os municípios do IBGE.
 
 O projeto já tem coleta, tratamento em SQL, testes, relatório de qualidade e arquivos Parquet em `output/`.
+
+Para acompanhar a implementação por arquivo e por linhas, leia o [guia passo a passo](GUIA_PASSO_A_PASSO.md). Ele explica as escolhas, os comandos, os testes e as colunas da entrega.
+
+O [README das APIs](docs/apis/README.md) traz as chamadas, os JSONs esperados, o cruzamento entre as fontes e a diferença entre o que o desafio pediu e a escolha de salvar indicadores em Parquet.
+
+A [apresentação do desafio](APRESENTACAO_DESAFIO.md) conta em primeira pessoa como o projeto foi resolvido: a ideia inicial, a coleta, os arquivos criados, os tratamentos, os problemas e os resultados.
 
 ## Por que essas APIs?
 
@@ -88,6 +94,7 @@ src/
   pipeline.py     liga as etapas e recebe os argumentos
 sql/
   transform.sql   desaninhamento, JOIN e indicadores
+docs/apis/        chamadas das APIs, exemplos JSON e regras do cruzamento
 tests/            testes com dados pequenos e respostas simuladas
 output/
   latest.json     aponta para a última entrega aprovada
