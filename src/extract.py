@@ -31,7 +31,7 @@ def collect(config: Config, directory: Path) -> dict:
         for _ in range(config.max_pages):
             page = client.get(f"{OPENALEX}/works", {
                 **auth, "filter": f"institutions.country_code:br,publication_year:{year}",
-                "sort": "id:asc", "per_page": config.per_page, "cursor": cursor,
+                "sort": "publication_date:asc", "per_page": config.per_page, "cursor": cursor,
                 "select": "id,display_name,publication_year,publication_date,cited_by_count,open_access,primary_topic,authorships",
             })
             if not isinstance(page.get("results"), list) or "count" not in page.get("meta", {}):
@@ -64,7 +64,7 @@ def collect(config: Config, directory: Path) -> dict:
     manifest = {
         "collected_at_utc": datetime.now(timezone.utc).isoformat(),
         "sources": [OPENALEX, IBGE], "start_year": config.start_year, "end_year": config.end_year,
-        "selection": "id:asc; páginas limitadas por ano; recorte não probabilístico",
+        "selection": "publication_date:asc; páginas limitadas por ano; recorte não probabilístico",
         "coverage": coverage, "complete": all(c["complete"] for c in coverage),
         "requested_institutions": len(ids), "returned_institutions": len(institutions),
         "sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
