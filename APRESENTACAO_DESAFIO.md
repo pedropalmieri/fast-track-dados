@@ -2,7 +2,7 @@
 
 Desenvolvi este projeto como prática após a **Trilha Engenharia de Dados POD TILLER**, disponibilizada pela Compass UOL na Udemy. Minha ideia foi aplicar os estudos em uma atividade que passasse por coleta, tratamento, cruzamento, qualidade e entrega dos dados.
 
-Neste documento eu conto o caminho que segui, os arquivos que criei, os problemas que encontrei e o que consegui obter. O código está organizado em [`src/`](src/), as consultas estão em [`sql/transform.sql`](sql/transform.sql) e os resultados estão em [`output/`](output/).
+Neste documento eu conto o caminho que segui, os arquivos que criei, os problemas que encontrei e o que consegui obter. Ao longo das etapas, deixei perguntas curtas para explicar por que escolhi cada caminho e qual resultado eu esperava. O código está organizado em [`src/`](src/), as consultas estão em [`sql/transform.sql`](sql/transform.sql) e os resultados estão em [`output/`](output/).
 
 ## Primeiro, entendi o que eu precisava entregar
 
@@ -11,6 +11,10 @@ Comecei pelo enunciado do desafio. Separei os pedidos principais: consumir pelo 
 Também identifiquei os tratamentos obrigatórios: converter tipos e datas, lidar com nulos, remover duplicatas, cruzar fontes e acrescentar métricas. Depois disso, eu precisava conferir a qualidade e salvar os dados em Parquet ou Delta Lake, com Snappy e partição temporal. O relatório de qualidade poderia ser JSON ou CSV.
 
 Usei esses pontos para orientar a implementação. No fim do [README principal](README.md), deixei uma tabela mostrando onde cada requisito foi atendido. Assim fica mais fácil conferir a entrega sem precisar procurar tudo pelo código.
+
+**Por que comecei pelo enunciado, antes de sair criando arquivos?**
+
+Fiz isso para saber o que precisava aparecer na entrega. Minha intenção era não terminar com uma análise interessante, mas sem algum requisito básico, como o desaninhamento em SQL ou o relatório de qualidade.
 
 ## Depois, defini a pergunta e mantive a ideia inicial
 
@@ -22,6 +26,10 @@ O OpenAlex tem os trabalhos, os autores e suas instituições. O IBGE tem os có
 
 Também defini um limite para a interpretação. Com essas fontes eu consigo estudar a produção indexada e as afiliações. Eu não consigo explicar o efeito de financiamento ou incentivos à pesquisa, porque não incluí uma fonte com esse tipo de informação.
 
+**Por que achei melhor continuar com OpenAlex e IBGE?**
+
+Porque as fontes tinham uma ligação que eu conseguia explicar: a localização das instituições. Eu esperava aproveitar o JSON aninhado do OpenAlex e acrescentar uma referência oficial de geografia com o IBGE, sem trocar de tema só para usar outra API.
+
 ## Escolhi um período e comecei com uma coleta pequena
 
 Para a entrega, usei 2023, 2024 e 2025. Escolhi anos encerrados para evitar comparar um ano em andamento com anos completos. Mesmo assim, a base pode continuar recebendo registros e correções desses períodos.
@@ -32,6 +40,10 @@ Coloquei os parâmetros em [`src/config.py`](src/config.py). Nesse arquivo defin
 
 Por padrão, o programa usa os três anos anteriores ao ano atual. Os anos da entrega também podem ser informados no comando, para repetir o mesmo período.
 
+**Por que coloquei esses limites em src/config.py?**
+
+Eu queria mudar ano, páginas e intervalo sem procurar valores espalhados pelo código. Também achei melhor recusar uma configuração inválida antes de gastar chamadas. O limite pequeno serviu para conferir o fluxo; eu não esperava que ele representasse todo o país.
+
 ## Preparei o ambiente antes de montar as etapas
 
 Criei um ambiente virtual para separar as bibliotecas do projeto das usadas em outros trabalhos. Registrei as versões em [`requirements.txt`](requirements.txt).
@@ -39,6 +51,10 @@ Criei um ambiente virtual para separar as bibliotecas do projeto das usadas em o
 Usei `requests` para as chamadas HTTP e DuckDB para ler JSON, executar SQL e gravar Parquet. Escolhi DuckDB porque ele roda junto com o Python, sem precisar montar um serviço de banco separado. Para o volume desta atividade, isso foi suficiente.
 
 Também criei [`.gitignore`](.gitignore) para deixar fora do Git o ambiente virtual, arquivos gerados pelo Python, JSONs brutos e arquivos locais de credenciais. A chave do OpenAlex é lida do ambiente; não foi colocada no código.
+
+**Por que separei o repositório em src, sql, tests, docs e output?**
+
+Fiz essa divisão para encontrar cada parte pelo seu uso. Em src ficam as etapas do programa; em sql, as regras de tratamento; em tests, os exemplos de conferência; em docs/apis, o consumo das fontes; em output, os dados entregues. Achei mais fácil acompanhar o projeto assim do que misturar código, documentação e resultado na mesma pasta.
 
 ## Centralizei as chamadas para não repetir o tratamento de rede
 
@@ -49,6 +65,10 @@ Nesse cliente eu coloquei intervalo mínimo entre chamadas, timeout de conexão 
 Também tratei o cabeçalho `Retry-After`, quando a API informa quanto tempo precisa esperar. Para erros como parâmetro inválido ou chave recusada, o cliente para, porque repetir o mesmo pedido não resolveria o problema.
 
 Eu limitei as tentativas para evitar que o programa ficasse tentando sem parar. As mensagens também não copiam a URL autenticada ou a resposta externa inteira, que poderiam conter dados desnecessários no log.
+
+**Por que criei http_client.py em vez de fazer requests.get em cada arquivo?**
+
+Eu queria que OpenAlex e IBGE seguissem as mesmas regras de espera e tentativa. Separando o cliente, uma correção de timeout ou de erro HTTP fica em um lugar. Também consigo testar falhas simuladas sem fazer chamadas reais.
 
 ## Busquei os trabalhos na API do OpenAlex
 
@@ -66,6 +86,10 @@ A resposta vem em JSON. O bloco `meta` traz informações da consulta, como a co
 
 Eu selecionei ID, título, ano, data, citações, acesso aberto, tema principal e afiliações. Não precisei baixar todos os campos que o OpenAlex oferece.
 
+**Por que pedi só alguns campos e deixei a coleta em extract.py?**
+
+Porque eu já sabia quais informações entrariam na análise e não precisava baixar o restante. Em extract.py concentrei a obtenção dos dados e deixei a limpeza para a transformação. Assim consigo olhar a resposta recebida antes de aplicar regras sobre ela.
+
 ## Fiz a paginação e guardei a cobertura da coleta
 
 Para começar um ano, usei `cursor='*'`. Depois de cada resposta, acrescentei os trabalhos recebidos e li `meta.next_cursor` para saber qual seria a próxima página.
@@ -76,6 +100,10 @@ Guardei essas informações no manifesto da coleta: ano, total disponível, quan
 
 Também registrei as fontes, o momento da coleta e os hashes SHA-256 dos arquivos. Os hashes permitem perceber se um JSON local mudou antes do reprocessamento. Eles não provam que a informação original da fonte está correta.
 
+**Por que não considerei a primeira página como a resposta inteira?**
+
+Porque a API devolve só uma parte dos trabalhos por vez. Eu guardei a cobertura para mostrar a diferença entre o que existia no filtro e o que foi baixado. O resultado esperado era conseguir identificar uma execução parcial sem depender de quem lê adivinhar isso pelo tamanho dos arquivos.
+
 ## Encontrei um erro de parâmetro na primeira tentativa
 
 Na primeira versão, tentei ordenar os trabalhos por ID. A consulta real retornou HTTP 400, porque aquela ordenação não era aceita.
@@ -83,6 +111,10 @@ Na primeira versão, tentei ordenar os trabalhos por ID. A consulta real retorno
 Troquei para `publication_date:asc`, testei novamente e registrei essa seleção no manifesto. Também considerei o efeito dessa escolha na análise: uma coleta limitada por data crescente pega primeiro o começo do ano e pode incluir datas preenchidas como primeiro de janeiro.
 
 Eu deixei esse ajuste registrado em um commit separado e em [`APRENDIZADOS.md`](APRENDIZADOS.md). Foi um caso em que uma chamada pequena ajudou a corrigir o parâmetro antes de ampliar a coleta.
+
+**Por que registrei esse erro e o efeito da nova ordenação?**
+
+Porque a correção resolveu a chamada, mas também definiu quais trabalhos chegariam primeiro na coleta limitada. Eu precisava explicar essa consequência para não tratar o recorte por data como uma amostra aleatória.
 
 ## Depois busquei o detalhe das instituições
 
@@ -94,6 +126,10 @@ Essa parte também ficou em [`src/extract.py`](src/extract.py). Do detalhe, eu a
 
 Na revisão da documentação das APIs, vi que pedir duzentos registros por página era um comportamento antigo, embora ainda tivesse funcionado. Como os lotes têm até cinquenta IDs, ajustei o pedido para cinquenta e conferi os cinquenta IDs de uma resposta real.
 
+**Por que fiz outra chamada ao OpenAlex e usei lotes?**
+
+Porque o trabalho não trazia a localização completa na afiliação. Eu precisava do detalhe da instituição para cruzar cidade e UF. Usei lotes para buscar vários IDs na mesma chamada, mantendo um tamanho pequeno e fácil de conferir.
+
 ## Consumi a lista de municípios do IBGE
 
 A segunda fonte foi `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`. Fiz uma chamada GET sem chave, usando o mesmo cliente HTTP.
@@ -104,6 +140,10 @@ Eu usei a ligação por região imediata e intermediária para extrair sigla e n
 
 Documentei as chamadas, os parâmetros, os exemplos de resposta e os tipos esperados em [`docs/apis/README.md`](docs/apis/README.md). Nesse arquivo também mostrei como consumir as APIs pelo terminal e pelo Python.
 
+**Por que usei o IBGE se o OpenAlex já tinha cidade e estado?**
+
+Porque nomes de lugar não eram o resultado final que eu queria. O IBGE acrescenta o código do município e a ligação oficial com UF e região. Minha intenção era entregar uma localização padronizada, além do texto recebido da primeira fonte.
+
 ## Salvei os JSONs antes de transformar
 
 Depois da coleta, salvei `works.json`, `institutions.json`, `municipalities.json` e `manifest.json` em uma pasta de `data/raw/` identificada pela execução.
@@ -111,6 +151,10 @@ Depois da coleta, salvei `works.json`, `institutions.json`, `municipalities.json
 Eu mantive esses arquivos separados dos resultados finais para conseguir reprocessar sem chamar as APIs outra vez. Os brutos ficam locais e não foram enviados ao repositório. Os Parquets finais e a auditoria foram incluídos na entrega.
 
 Antes de usar os JSONs, o comando principal recalcula os hashes dos três arquivos de dados e compara com o manifesto. Se um deles estiver diferente, o reprocessamento para.
+
+**Por que separei os dados brutos dos Parquets finais?**
+
+Eu queria conseguir refazer o tratamento sem depender de outra consulta, que poderia vir diferente. O bruto mostra o que recebi; o Parquet mostra o que saiu depois das regras. Os hashes ajudam a detectar alteração nos arquivos usados para repetir essa etapa.
 
 ## Carreguei os dados no DuckDB e tratei os campos
 
@@ -121,6 +165,10 @@ No SQL, comecei pelos trabalhos. Converti ano para inteiro, data para `DATE`, ci
 Para os nulos, mantive citações e acesso aberto desconhecidos sem preencher com zero. Zero significaria uma informação diferente. Para tema principal ausente, usei o nome `Não informado`, mantendo o ID do tema nulo.
 
 Também removi trabalhos repetidos pelo ID do OpenAlex. A intenção foi ter uma tabela `works` com uma linha por trabalho antes de abrir as afiliações.
+
+**Por que deixei transform.py e transform.sql separados?**
+
+Em transform.py eu preparo a leitura e o banco em memória. No SQL eu concentro as regras dos dados. Achei essa separação mais fácil de revisar: consigo seguir as consultas sem misturá-las com o controle de arquivos e a execução do Python.
 
 ## Abri os autores e as instituições com SQL
 
@@ -137,6 +185,10 @@ Depois usei `DISTINCT` no par de trabalho e instituição. Se dois autores do me
 
 Essa etapa gerou a tabela `affiliations`. A partir dela, eu poderia ligar o trabalho aos detalhes de suas instituições sem depender da lista aninhada original.
 
+**Por que removi o par repetido de trabalho e instituição?**
+
+Porque vários autores podem apontar para a mesma instituição no mesmo trabalho. Eu queria contar trabalhos ligados à instituição, não a quantidade de autores dela. Sem essa remoção, a contagem poderia ficar maior só pela repetição da afiliação.
+
 ## Cruzei os dados com o IBGE usando cidade e UF
 
 Primeiro liguei a afiliação ao detalhe da instituição pelo ID do OpenAlex. Depois usei cidade e UF da instituição para encontrar o município no IBGE.
@@ -147,6 +199,10 @@ Eu exigi cidade e UF no JOIN. Só o nome da cidade poderia ligar um registro ao 
 
 Usei `LEFT JOIN` para não apagar uma afiliação quando a localização não fosse encontrada. Nesses casos, os campos do IBGE ficam nulos e `geo_status` registra o que aconteceu. A auditoria também guarda uma lista das instituições sem município.
 
+**Por que usei LEFT JOIN e não descartei o que não encontrou município?**
+
+Porque uma falha de correspondência também é informação para conferir. Se eu apagasse a linha, perderia a afiliação e esconderia o problema. Eu esperava preservar o trabalho, marcar a pendência e depois investigar a causa.
+
 ## A conferência mostrou um problema com o Distrito Federal
 
 Ao revisar os registros sem correspondência, encontrei 24 pares ligados a Brasília. O OpenAlex usava `Federal District`, enquanto o IBGE usava `Distrito Federal`.
@@ -155,6 +211,10 @@ Adicionei uma regra explícita para essa tradução no JOIN. Também marquei ess
 
 Depois do ajuste, os 591 pares da entrega receberam município, UF e região: 567 sem tradução de UF e 24 com a regra do DF. Eu considero isso uma correspondência dentro das regras implementadas. A localização continua sendo a da instituição cadastrada, não uma confirmação manual do campus de cada autor.
 
+**Por que fiz uma regra específica em vez de tentar aproximar qualquer nome?**
+
+Porque eu encontrei uma diferença conhecida e consegui explicar a correção. Uma comparação por nomes parecidos poderia escolher outro lugar sem deixar isso claro. Preferi resolver esse caso de forma pequena e registrar onde a regra foi usada.
+
 ## A auditoria também encontrou autores incompletos
 
 Durante as verificações, três trabalhos apareceram sem afiliação brasileira visível, apesar de terem sido retornados pelo filtro brasileiro. Fui conferir e encontrei uma limitação da listagem do OpenAlex: ela corta a lista em cem autores.
@@ -162,6 +222,10 @@ Durante as verificações, três trabalhos apareceram sem afiliação brasileira
 A instituição brasileira podia estar depois desse corte. Para resolver, voltei à coleta e acrescentei uma consulta ao endpoint individual quando a lista chegava a cem autores. Substituí `authorships` pela lista detalhada antes de buscar as instituições.
 
 Nove trabalhos precisaram dessa consulta. Depois da correção, todos os trabalhos coletados tinham ao menos uma afiliação brasileira disponível. Mantive a verificação que encontrou o problema e acrescentei teste para essa situação.
+
+**Por que corrigi a coleta em vez de retirar a validação?**
+
+Porque a validação mostrou uma informação que estava faltando. Retirar a regra faria o programa terminar, mas manteria a perda de instituições. Minha intenção era recuperar os autores e continuar conferindo se havia uma afiliação brasileira nos trabalhos recebidos.
 
 ## Separei os indicadores para não multiplicar as contagens
 
@@ -173,6 +237,10 @@ Também considerei que um trabalho pode pertencer a cidades, estados ou regiões
 
 Salvei os indicadores em quatro tabelas: `annual`, `institution_annual`, `geography` e `topics`. A base tratada com as afiliações ficou em `production`.
 
+**Por que não calculei tudo diretamente na base production?**
+
+Porque production tem uma linha por trabalho e instituição. O mesmo trabalho pode se repetir nessa base, junto com suas citações. Eu separei as contagens para que o total de trabalhos e a soma de citações não aumentassem só por causa do JOIN.
+
 ## Diferenciei o total nacional do tamanho da página baixada
 
 Como eu baixei cem trabalhos por ano, comparar só o tamanho da coleta daria crescimento de zero. Esse resultado seria consequência do meu limite, não uma conclusão sobre o país.
@@ -180,6 +248,10 @@ Como eu baixei cem trabalhos por ano, comparar só o tamanho da coleta daria cre
 Aproveitei `meta.count`, informado pelo OpenAlex, para guardar o total do filtro brasileiro por ano. Acrescentei ao resumo anual `source_available_works`, `collection_coverage` e `national_growth_rate`.
 
 Mantive `works_count`, `sample_growth_rate`, acesso aberto e citações ligados ao recorte. Também criei um teste com uma página do mesmo tamanho nos dois anos, mas totais nacionais diferentes, para conferir que os cálculos não fossem confundidos.
+
+**Por que deixei duas contagens e duas variações no resumo anual?**
+
+Porque elas respondem coisas diferentes. Uma acompanha o universo informado pela API; a outra acompanha o que eu baixei. Eu queria deixar essa diferença visível no arquivo, em vez de explicar só no texto e correr o risco de alguém usar a coluna errada.
 
 ## Criei verificações antes de publicar os dados finais
 
@@ -191,6 +263,10 @@ Separei os problemas em erros e avisos. Erro de estrutura ou consistência repro
 
 Na execução entregue, foram 41 verificações: quarenta passaram e uma registrou o aviso esperado de coleta parcial. O relatório aprovado mostra que os dados passaram nessas regras. Ele não significa que o recorte seja representativo de todo o Brasil.
 
+**Por que criei quality.py separado e diferenciei erro de aviso?**
+
+Eu queria reunir as regras de conferência para enxergar o que foi validado. Também não achei adequado tratar coleta parcial como se fosse a mesma coisa que uma data inválida. O aviso precisa aparecer, mas um erro de consistência deve impedir a entrega dos Parquets.
+
 ## Gravei a base e os indicadores em Parquet
 
 Criei [`src/persist.py`](src/persist.py) para gravar a saída. Escolhi Parquet com Snappy e pastas por ano porque o desafio pedia Parquet ou Delta Lake, compressão Snappy e uma estratégia temporal de partição.
@@ -200,6 +276,10 @@ A base final principal é `production`, com uma linha por trabalho e instituiç�
 Depois de gravar, fiz o programa reler os arquivos e conferir quantidade de linhas e compressão. Só depois ele atualiza `output/latest.json`, que aponta para a última execução aprovada.
 
 Cada execução usa uma pasta própria. Se uma exportação falhar, ela pode deixar arquivos parciais naquela pasta, mas não substitui o apontador da última entrega válida. O relatório de qualidade fica em JSON, junto dos dados.
+
+**Por que criei persist.py e salvei também os indicadores?**
+
+Eu separei a gravação para só chamar essa parte depois da auditoria. Salvei os indicadores para deixar as consultas prontas, mas mantive claro que essa divisão foi uma escolha minha. O pedido do desafio era o formato final com compressão e partição, não uma obrigação de ter quatro tabelas extras.
 
 ## Liguei as etapas e deixei um comando para executar
 
@@ -219,6 +299,10 @@ Também deixei um modo de reprocessar uma pasta de brutos sem consultar as APIs:
 
 Nesse segundo caso, os metadados e os hashes daquela coleta orientam o processamento. Uma falha retorna código diferente de zero e gera um registro; o apontador só muda depois de uma entrega aprovada.
 
+**Por que usei pipeline.py e run.sh, se os outros arquivos já existiam?**
+
+Os outros arquivos fazem etapas específicas. Eu precisava de um ponto que colocasse essas etapas na ordem e recebesse os parâmetros; esse ficou em pipeline.py. O run.sh ajuda quem vai executar a preparar o ambiente e chamar o fluxo sem repetir vários comandos.
+
 ## Testei com exemplos pequenos e com dados reais
 
 Separei os testes em [`tests/`](tests/). Usei exemplos pequenos para saber o que esperar de cada cálculo. Simulei chamadas HTTP para testar erros e paginação sem depender das APIs disponíveis naquele momento.
@@ -232,6 +316,10 @@ O comando dos testes ficou documentado no README:
 ```bash
 .venv/bin/python -m unittest discover -s tests -v
 ```
+
+**Por que usei os dois tipos de conferência?**
+
+Nos exemplos pequenos eu sei o resultado esperado e consigo provocar uma condição de erro sem depender da API. Na execução real eu confiro se os parâmetros e o formato recebido funcionam de verdade. Achei melhor usar os dois porque um teste simulado não mostra sozinho todas as diferenças da fonte.
 
 ## Comparei o que eu esperava com o que obtive
 
@@ -255,6 +343,10 @@ No recorte, a USP apareceu com 61 trabalhos e a Unicamp com dezoito. O Sudeste t
 
 Deixei os números e os cuidados de interpretação em [`RESULTADOS.md`](RESULTADOS.md). A saída tem quinze arquivos Parquet, distribuídos entre cinco tabelas e três anos, e um relatório JSON.
 
+**O resultado ficou igual à ideia inicial?**
+
+Consegui entregar a coleta, o cruzamento, as verificações e os arquivos. O detalhamento nacional ficou limitado pelo tamanho do recorte, então ajustei a forma de apresentar: usei o total da API para a evolução e deixei os demais resultados como descrição dos trabalhos baixados. Preferi mostrar esse limite a afirmar uma conclusão maior que os dados.
+
 ## O que ficou de aprendizado e o que eu faria depois
 
 A parte que mais exigiu conferência foi entender o que a resposta da API realmente trazia. Um filtro correto não garantia todos os autores visíveis. Uma cidade conhecida não garantia o mesmo nome de UF nas duas fontes. E uma coleta com a mesma quantidade por ano não servia para medir crescimento nacional.
@@ -266,3 +358,7 @@ Ainda há limites. A coleta representa cerca de 0,03% do total informado em cada
 Como continuação, eu começaria pela cobertura antes de acrescentar mais ferramentas ou gráficos. Depois escolheria uma pergunta mais específica, como os temas de educação e IA, com uma coleta adequada para sustentá-la.
 
 Ao final, consegui praticar o fluxo de engenharia de dados proposto no desafio: buscar, tratar, cruzar, conferir e disponibilizar. Usei a Trilha Engenharia de Dados POD TILLER como contexto de estudo e deixei as escolhas documentadas para conseguir repetir a execução e explicar o que cada etapa faz.
+
+**Por que eu começaria a próxima melhoria pela cobertura?**
+
+Porque o principal limite da análise está nos dados que eu trouxe. Mais gráficos ou mais ferramentas não aumentariam essa cobertura. Primeiro eu planejaria uma coleta que sustentasse a pergunta; depois revisaria o processamento e a apresentação dos resultados.
