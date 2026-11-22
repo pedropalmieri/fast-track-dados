@@ -97,6 +97,18 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(c.execute("SELECT count(*) FROM read_parquet(?, hive_partitioning=true)",
                                   [str(destination / "production/**/*.parquet")]).fetchone()[0], 5)
 
+    def test_national_growth_uses_api_total_instead_of_page_size(self) -> None:
+        save_json(self.raw / "manifest.json", {"coverage": [
+            {"year": 2023, "available": 1000, "fetched": 1, "complete": False},
+            {"year": 2024, "available": 2000, "fetched": 1, "complete": False},
+        ]})
+        c = self.connection()
+        self.assertEqual(c.execute("SELECT source_available_works, national_growth_rate, "
+                                   "sample_growth_rate FROM annual WHERE year=2024").fetchone(),
+                         (2000, 1.0, 0.0))
+        self.assertAlmostEqual(c.execute("SELECT collection_coverage FROM annual WHERE year=2023")
+                               .fetchone()[0], 0.001)
+
     def test_federal_district_translation_is_explicit(self) -> None:
         institutions = json.loads((self.raw / "institutions.json").read_text())
         institutions[0]["geo"] = {"city": "Brasília", "region": "Federal District"}
