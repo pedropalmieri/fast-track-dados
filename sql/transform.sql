@@ -72,9 +72,14 @@ WITH totals AS (
            count(*) FILTER (WHERE is_oa) AS oa_count
     FROM works GROUP BY year
 )
-SELECT *, works_count::DOUBLE / nullif(lag(works_count) OVER (ORDER BY year), 0) - 1
+-- O crescimento nacional usa meta.count, enquanto acesso aberto e citações usam o recorte.
+SELECT t.*, c.available AS source_available_works,
+       t.works_count::DOUBLE / nullif(c.available, 0) AS collection_coverage,
+       c.available::DOUBLE / nullif(lag(c.available) OVER (ORDER BY t.year), 0) - 1
+          AS national_growth_rate,
+       t.works_count::DOUBLE / nullif(lag(t.works_count) OVER (ORDER BY t.year), 0) - 1
           AS sample_growth_rate
-FROM totals;
+FROM totals t LEFT JOIN raw_coverage c USING (year);
 
 CREATE TABLE institution_annual AS
 SELECT year, institution_id, institution_name, count(DISTINCT work_id) AS works_count
