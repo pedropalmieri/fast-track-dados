@@ -41,14 +41,18 @@ QUALIFY row_number() OVER (PARTITION BY id ORDER BY display_name) = 1;
 -- Não uso apenas o nome da cidade: existem municípios homônimos em UFs distintas.
 CREATE TABLE institution_geo AS
 SELECT i.*, m.municipality_id, m.municipality, m.state_code, m.state, m.region,
-       CASE WHEN m.municipality_id IS NOT NULL THEN 'correspondencia_exata'
+       CASE WHEN m.municipality_id IS NOT NULL AND normalizar(i.state_source) = 'federal district'
+                 THEN 'correspondencia_uf_traduzida'
+            WHEN m.municipality_id IS NOT NULL THEN 'correspondencia_exata'
             WHEN nullif(i.city, '') IS NULL OR nullif(i.state_source, '') IS NULL
                  THEN 'localizacao_incompleta'
             ELSE 'sem_correspondencia' END AS geo_status
 FROM institutions i
 LEFT JOIN municipalities m
   ON normalizar(i.city) = normalizar(m.municipality)
- AND normalizar(i.state_source) IN (normalizar(m.state), normalizar(m.state_code));
+ -- O OpenAlex usa esse nome em inglês para o Distrito Federal.
+ AND CASE WHEN normalizar(i.state_source) = 'federal district' THEN 'distrito federal'
+          ELSE normalizar(i.state_source) END IN (normalizar(m.state), normalizar(m.state_code));
 
 CREATE TABLE production AS
 SELECT w.work_id, w.title, w.year, w.publication_date, w.citations, w.is_oa,
