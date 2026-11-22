@@ -64,7 +64,7 @@ FROM works w
 JOIN affiliations a USING (work_id)
 LEFT JOIN institution_geo g USING (institution_id);
 
--- As métricas nacionais usam works, nunca o JOIN que multiplica as linhas.
+-- Uso meta.count para o total nacional e works para as métricas do recorte, sem repetir afiliações.
 CREATE TABLE annual AS
 WITH totals AS (
     SELECT year, count(*) AS works_count, sum(citations) AS citations,
