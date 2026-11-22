@@ -97,6 +97,20 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(c.execute("SELECT count(*) FROM read_parquet(?, hive_partitioning=true)",
                                   [str(destination / "production/**/*.parquet")]).fetchone()[0], 5)
 
+    def test_federal_district_translation_is_explicit(self) -> None:
+        institutions = json.loads((self.raw / "institutions.json").read_text())
+        institutions[0]["geo"] = {"city": "Brasília", "region": "Federal District"}
+        save_json(self.raw / "institutions.json", institutions)
+        municipalities = json.loads((self.raw / "municipalities.json").read_text())
+        municipalities.append({"id": 5300108, "nome": "Brasília", "regiao-imediata": {
+            "regiao-intermediaria": {"UF": {"sigla": "DF", "nome": "Distrito Federal",
+                                               "regiao": {"nome": "Centro-Oeste"}}}}})
+        save_json(self.raw / "municipalities.json", municipalities)
+        c = self.connection()
+        self.assertEqual(c.execute("SELECT municipality_id, geo_status FROM institution_geo "
+                                   "WHERE institution_id='I1'").fetchone(),
+                         (5300108, "correspondencia_uf_traduzida"))
+
     def test_modified_raw_file_fails_integrity_check(self) -> None:
         manifest = {**self.manifest, "sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                                                for p in self.raw.glob("*.json")}}
