@@ -46,6 +46,15 @@ def collect(config: Config, directory: Path) -> dict:
                          "complete": fetched >= total})
     if not works:
         raise ValueError("Nenhum trabalho retornado; não será gerada uma entrega vazia.")
+    # Listagens cortam autores após 100 posições; a afiliação brasileira pode vir depois.
+    # Consulto o trabalho individual para não perder essas instituições no JOIN.
+    expanded = 0
+    for work in works:
+        if len(work.get("authorships", [])) >= 100:
+            work_id = work["id"].rsplit("/", 1)[-1]
+            detail = client.get(f"{OPENALEX}/works/{work_id}", auth)
+            work["authorships"] = detail["authorships"]
+            expanded += 1
     ids = sorted({i["id"].rsplit("/", 1)[-1] for w in works
                   for a in w.get("authorships", []) for i in a.get("institutions", [])
                   if i.get("country_code") == "BR" and i.get("id")})
@@ -66,7 +75,7 @@ def collect(config: Config, directory: Path) -> dict:
         "sources": [OPENALEX, IBGE], "start_year": config.start_year, "end_year": config.end_year,
         "selection": "publication_date:asc; páginas limitadas por ano; recorte não probabilístico",
         "coverage": coverage, "complete": all(c["complete"] for c in coverage),
-        "requested_institutions": len(ids), "returned_institutions": len(institutions),
+        "expanded_authorships": expanded, "requested_institutions": len(ids), "returned_institutions": len(institutions),
         "sha256": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                    for p in sorted(directory.glob("*.json")) if p.name != "manifest.json"},
     }
