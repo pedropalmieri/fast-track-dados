@@ -1,95 +1,164 @@
-# fast-track-dados
+# Produção científica brasileira com Python e SQL
 
-Projeto do desafio de Engenharia de Dados da Compass UOL (FT03 – Projeto 1).
+Desafio FT03 - Projeto 1, da trilha de dados da Compass UOL.
 
-## Cenário do projeto
+A ideia é olhar para os trabalhos ligados a instituições brasileiras: como a contagem muda por ano e onde aparecem as instituições, cidades e temas de pesquisa. Para isso, juntei dados do OpenAlex com os municípios do IBGE.
 
-O projeto construirá um panorama da produção científica brasileira indexada pelo OpenAlex: sua evolução ao longo do tempo, distribuição por instituições e localização (municípios, estados e regiões) e áreas de pesquisa. O pipeline cruzará duas APIs públicas de domínios distintos e trabalhará com respostas JSON.
+O projeto já tem coleta, tratamento em SQL, testes, relatório de qualidade e arquivos Parquet em `output/`.
 
-### Fontes de dados
+## Por que essas APIs?
 
-| Fonte | Domínio | Dados utilizados |
+Mantive a proposta inicial do repositório. O OpenAlex tem autores e instituições dentro de listas, o que permite praticar o desaninhamento em SQL. O IBGE entra com os códigos oficiais de município, estado e região. As duas fontes têm papéis diferentes e uma ligação que dá para explicar e conferir.
+
+Usei DuckDB porque ele roda junto com o Python, lê JSON e grava Parquet. Assim não precisei montar um banco ou um serviço à parte só para este desafio.
+
+| Fonte | O que busco | Documentação |
 |---|---|---|
-| [OpenAlex API](https://help.openalex.org/api/) | Produção científica | Trabalhos, ano de publicação, tópicos, citações, acesso aberto e afiliações/instituições |
-| [API de Localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) | Geografia oficial | Códigos e hierarquia de municípios, estados e regiões brasileiras |
+| OpenAlex | Trabalhos, afiliações, localização das instituições e total do filtro por ano | [API](https://help.openalex.org/api/) |
+| IBGE | Municípios e sua ligação com UFs e regiões | [Localidades](https://servicodados.ibge.gov.br/api/docs/localidades) |
 
-O período será definido com base nos anos completos disponíveis no OpenAlex; o ano mais recente poderá ser excluído se ainda estiver incompleto. Serão considerados trabalhos com pelo menos uma afiliação brasileira. A associação geográfica será feita a partir dos metadados de localização das instituições no OpenAlex e normalizada com os códigos do IBGE; registros sem correspondência serão identificados no relatório de qualidade, não descartados silenciosamente.
+## O que a análise cobre
 
-### Pergunta e indicadores
+A execução entregue usa 2023, 2024 e 2025. São anos encerrados, mas a base ainda pode receber correções e novos registros desses períodos.
 
-**Pergunta:** como evoluiu a produção científica associada a instituições brasileiras e como ela se distribui entre instituições, municípios, estados, regiões e áreas de pesquisa?
+Há dois conjuntos de números, e essa diferença é importante:
 
-- **Produção nacional por ano:** número de trabalhos distintos com pelo menos uma afiliação brasileira.
-- **Distribuição geográfica:** trabalhos distintos associados a cada município, estado e região, além da participação de cada localidade no total nacional.
-- **Produção por instituição:** número de trabalhos distintos associados a cada instituição brasileira por ano.
-- **Evolução e áreas de pesquisa:** variação anual da produção e sua distribuição pelos tópicos classificados pelo OpenAlex.
-- **Acesso aberto e citações:** proporção de trabalhos em acesso aberto e contagem de citações como métricas descritivas, não como medidas isoladas de qualidade.
+- **Total nacional indexado:** vem de `meta.count`, a contagem do filtro brasileiro que o OpenAlex informa para cada ano.
+- **Dados coletados:** 100 trabalhos por ano, ordenados por data de publicação crescente. Instituições, geografia, temas, citações e acesso aberto são calculados apenas nesses 300 trabalhos.
 
-Os indicadores representam a produção indexada pelo OpenAlex, não toda a pesquisa realizada no país. Um trabalho com afiliações em mais de um município, estado ou região será contado em cada localidade correspondente; por isso, os totais geográficos não são necessariamente somáveis ao total nacional. As localizações podem estar ausentes ou imprecisas. Volume de publicações, tópicos e citações não medem, por si só, qualidade acadêmica, qualidade do ensino universitário ou impacto de políticas de incentivo.
+Esse recorte não é aleatório nem representa toda a pesquisa brasileira. A ordenação favorece o começo do ano e pode incluir datas preenchidas como 1º de janeiro. Não use os rankings do recorte como ranking nacional.
 
-O escopo mede produção científica vinculada a instituições brasileiras em todas as áreas, incluindo educação quando identificada pelos tópicos do OpenAlex. Não mede financiamento ou incentivos à pesquisa: essa análise exigiria uma fonte adicional específica, com dados programáticos e cobertura verificáveis.
+Veja os números e a leitura dos resultados em [RESULTADOS.md](RESULTADOS.md).
 
-### Fluxo proposto
+## Como rodar
 
-1. Consultar a API do OpenAlex com filtros de país e período, obtendo trabalhos e afiliações com paginação.
-2. Consultar a API de Localidades do IBGE para obter códigos e hierarquias geográficas oficiais.
-3. Desaninhar as afiliações, padronizar datas, identificadores e localidades; registrar associações não resolvidas.
-4. Deduplicar por identificador de trabalho e agregar a produção por ano, instituição e localidade.
-5. Cruzar as localidades com a hierarquia do IBGE, calcular indicadores e validar schema, nulidade, unicidade e intervalos.
-6. Exportar o relatório de qualidade e salvar os dados finais em Parquet particionado por ano.
+Testado com Python 3.13. É preciso ter Git, Python com suporte a `venv` e internet para instalar as bibliotecas e consultar as APIs.
 
-A API de Localidades do IBGE é pública. O OpenAlex permite consultas sem chave dentro de um orçamento compartilhado limitado; para execução reproduzível, recomenda-se configurar uma chave própria por meio da variável de ambiente `OPENALEX_API_KEY`. Credenciais nunca devem ser versionadas.
+```bash
+git clone https://github.com/pedropalmieri/fast-track-dados.git
+cd fast-track-dados
+./run.sh
+```
 
-## Requisitos técnicos do desafio
+O script cria `.venv`, instala as versões de `requirements.txt` e executa o pipeline. Por padrão, usa os três anos anteriores ao ano atual, com uma página de 100 trabalhos por ano. Para repetir o período desta entrega:
 
-O desafio propõe a construção de um pipeline de extração, transformação e disponibilização de dados usando Python e SQL, com foco em organização, qualidade, resiliência e reprodutibilidade.
+```bash
+./run.sh --start-year 2023 --end-year 2025 --max-pages 1 --per-page 100
+```
 
-### Extração de dados e APIs
+Não é preciso ativar o ambiente para usar `run.sh`. Se ele já estiver preparado, também dá para executar direto:
 
-- Consumir dados de pelo menos duas APIs públicas de domínios distintos, conforme o cenário acima.
-- Implementar controle de taxa de requisições (rate limiting), retentativas e tratamento de erros.
-- Gerenciar credenciais por variáveis de ambiente (por exemplo, com `.env` ou `os.getenv`) e não versionar chaves de API.
+```bash
+.venv/bin/python -m src.pipeline --start-year 2023 --end-year 2025
+```
 
-### Transformação e SQL
+### Chave do OpenAlex
 
-- Organizar o código em scripts e funções modulares em Python, com type hints.
-- Usar SQL para desaninhar coleções complexas, como arrays e JSONs aninhados, por exemplo com `UNNEST` ou ferramentas como DuckDB, SQLite ou PySpark.
-- Aplicar pelo menos cinco transformações estruturadas, incluindo:
-  - padronização de tipos e datas;
-  - tratamento de valores nulos;
-  - deduplicação;
-  - cruzamento de fontes com `JOIN`;
-  - enriquecimento de métricas.
+A consulta pequena funcionou sem chave na execução de 22/11/2026. Nesse caso, o orçamento de uso é compartilhado pelo IP. Para seguir o cursor além da primeira página, configure sua chave gratuita no ambiente:
 
-### Qualidade e persistência dos dados
+```bash
+export OPENALEX_API_KEY='sua-chave'
+./run.sh --start-year 2023 --end-year 2025 --max-pages 5
+```
 
-- Automatizar verificações de schema, proporção de valores nulos (null ratio), unicidade e intervalos.
-- Exportar um resumo da execução e da auditoria de qualidade em JSON ou CSV.
-- Salvar os dados finais em formato colunar (Parquet ou Delta Lake), com compressão Snappy.
-- Particionar os arquivos por uma estratégia temporal adequada, como ano e mês.
+A chave é lida com `os.getenv` e não deve entrar no Git. O projeto não carrega `.env` automaticamente. Se você usar esse arquivo por conta própria, ele já está no `.gitignore`. O IBGE não precisa de chave.
 
-## Entregáveis esperados
+Mais páginas aumentam o recorte; não garantem coleta completa. Confira `complete` e `coverage` no relatório. Veja as regras atuais de [autenticação](https://help.openalex.org/api/authentication/) e [paginação](https://help.openalex.org/api/paging/), pois os limites do serviço podem mudar.
 
-| Entregável | Requisito |
+### Reprocessar sem consultar as APIs
+
+Os JSONs brutos ficam em `data/raw/<id-da-execucao>/`, fora do Git. Depois de uma coleta:
+
+```bash
+.venv/bin/python -m src.pipeline --from-raw data/raw/ID_DA_COLETA
+```
+
+Troque `ID_DA_COLETA` pela pasta gerada no seu computador. O comando confere os hashes dos arquivos antes de usar os dados. Os brutos da entrega não estão no repositório; os Parquets finais e o relatório estão. Uma nova consulta pode trazer números diferentes porque as APIs mudam.
+
+## Como organizei
+
+```text
+src/
+  config.py       período e limites da coleta
+  http_client.py  chamadas HTTP, intervalo e novas tentativas
+  extract.py      coleta e manifesto dos arquivos brutos
+  transform.py    carrega os JSONs e executa o SQL
+  quality.py      verificações e avisos de qualidade
+  persist.py      grava e relê os Parquets
+  pipeline.py     liga as etapas e recebe os argumentos
+sql/
+  transform.sql   desaninhamento, JOIN e indicadores
+tests/            testes com dados pequenos e respostas simuladas
+output/
+  latest.json     aponta para a última entrega aprovada
+  runs/<id>/      relatório e tabelas particionadas por ano
+```
+
+Separei os arquivos por responsabilidade para conseguir corrigir uma etapa sem mexer no fluxo todo. Não usei camadas ou ferramentas extras que não eram necessárias para executar o desafio.
+
+## O que acontece no tratamento
+
+1. Converto ano, data, citações e acesso aberto para os tipos usados na análise. Uma data inválida fica nula e reprova a validação.
+2. Mantenho citações e acesso aberto desconhecidos como nulos. Tema ausente recebe `Não informado`. Não trato dado ausente como zero.
+3. Removo trabalhos repetidos pelo ID. Também removo afiliações repetidas do mesmo trabalho, comuns quando há vários autores na mesma instituição.
+4. Uso `json_each` no SQL para abrir as listas de autores e instituições. Depois mantenho as instituições brasileiras.
+5. Cruzo cidade e UF com o IBGE. Padronizo caixa e acentos e trato `Federal District` como `Distrito Federal`. Não faço aproximação por semelhança de nome.
+6. Calculo contagens por ano, instituição, localidade e tema principal, além de participação geográfica, acesso aberto, citações e variação anual.
+
+Os totais nacionais e as métricas de trabalhos são calculados antes do JOIN das afiliações. Isso evita contar o mesmo trabalho ou suas citações várias vezes.
+
+Um trabalho pode aparecer em mais de uma cidade ou estado. Por isso, as participações geográficas podem somar mais de 100%. A localização é da instituição cadastrada, não necessariamente do campus de cada autor. Uso o tema principal do trabalho, sem abrir todos os temas em múltiplas contagens.
+
+## Qualidade e saída
+
+A auditoria verifica tipos, campos obrigatórios, proporção de nulos por coluna, chaves únicas, datas, intervalos e contagens antes e depois dos cruzamentos. Ela também confere a cobertura informada pela fonte.
+
+Erros de estrutura ou consistência bloqueiam a gravação dos Parquets. Coleta parcial e campos opcionais ausentes ficam como avisos. O relatório inclui as instituições sem município e os dados da coleta, com data, cobertura e hashes.
+
+| Pasta na execução | Conteúdo | Uma linha representa |
+|---|---|---|
+| `production/` | Base tratada com afiliações e geografia | Trabalho + instituição brasileira |
+| `annual/` | Totais, cobertura, variação, acesso aberto e citações | Ano |
+| `institution_annual/` | Trabalhos distintos por instituição | Ano + instituição |
+| `geography/` | Contagem e participação por município, UF e região | Ano + nível + localidade |
+| `topics/` | Contagem por tema principal | Ano + tema |
+
+Todos os Parquets usam Snappy e pastas `year=2023`, por exemplo. `quality_report.json` fica na mesma execução. O pipeline relê os arquivos para conferir a quantidade de linhas e a compressão. Só depois atualiza `output/latest.json`.
+
+Em `annual`, `source_available_works` é o total do filtro da API e `national_growth_rate` é sua variação anual. `works_count`, `oa_share`, `citations` e `sample_growth_rate` vêm do recorte. `collection_coverage` mostra a fração coletada. As taxas ficam entre 0 e 1; multiplique por 100 para mostrar em porcentagem. Em acesso aberto, o denominador usa os trabalhos com esse campo conhecido (`oa_known`).
+
+## Testes
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+Os testes não chamam as APIs. Eles cobrem paginação, limite de requisições, falhas de rede, autores truncados, duplicatas, cidades homônimas, tradução do DF, nulos, datas inválidas, hashes e gravação dos Parquets. Há também um caso que diferencia crescimento nacional de tamanho da página coletada.
+
+Os problemas encontrados durante a implementação estão em [APRENDIZADOS.md](APRENDIZADOS.md).
+
+## Se der problema
+
+- Erro 401 ou 403: confira a chave e as regras de acesso do OpenAlex.
+- Erro 429 ou 5xx: o cliente tenta de novo, com espera crescente e respeito ao `Retry-After`. Depois de quatro tentativas, para.
+- Falha de conexão: confira a rede. Há timeout de conexão e leitura.
+- Qualidade reprovada: veja os checks em `quality_report.json`. Não há Parquet novo nessa execução.
+- Outras falhas: veja `failure.json` na pasta da execução. A mensagem guarda a classe do erro, sem copiar URLs que poderiam conter credenciais.
+
+O programa retorna código diferente de zero em caso de falha. A última entrega aprovada continua disponível.
+
+## Onde cada requisito foi atendido
+
+| Requisito | Onde conferir |
 |---|---|
-| Repositório Git | Código versionado, organizado de forma modular em `src/` e publicado no GitHub |
-| Documentação | Instruções de execução, variáveis de ambiente e documentação das APIs neste README |
-| Dependências | `requirements.txt` com as bibliotecas necessárias para reproduzir o projeto |
-| Execução | Script `run.sh` ou um comando único para executar o pipeline ponta a ponta |
-| Dataset persistido | Dados limpos em arquivos Parquet na pasta `output/` |
-| Relatório de qualidade | Resultado das validações e métricas de consistência em JSON ou CSV |
+| Duas APIs de domínios diferentes | `src/extract.py` |
+| Limite de taxa, retentativas e credenciais no ambiente | `src/http_client.py` e `src/config.py` |
+| Código modular e type hints | `src/` |
+| Desaninhamento SQL e cinco ou mais transformações | `sql/transform.sql` |
+| Schema, nulos, unicidade e intervalos | `src/quality.py` |
+| Relatório JSON | `output/runs/<id>/quality_report.json` |
+| Parquet, Snappy e partição temporal | `src/persist.py` e `output/` |
+| Execução ponta a ponta | `./run.sh` |
+| Dependências fixadas | `requirements.txt` |
 
-## Critérios de avaliação
-
-- **Engenharia de software:** clareza do código, organização do repositório e reprodutibilidade.
-- **Qualidade técnica:** manipulação de estruturas de dados, eficiência das transformações e uso de SQL.
-- **Robustez:** tratamento de exceções em requisições HTTP e resiliência a falhas.
-- **Governança:** validação de schema, integridade dos dados e relatório de qualidade descritivo.
-
-## Entrega
-
-O repositório público no GitHub deve ser enviado pelo formulário disponibilizado durante a apresentação até **23/11/2026, às 08h00**.
-
-## Especificação original
-
-Consulte o [PDF do desafio](desafio/FT03_Engenharia_PRJ01_Python.pdf) para ver as diretrizes completas.
+A [especificação original](desafio/FT03_Engenharia_PRJ01_Python.pdf) está em `desafio/`. O envio do link pelo formulário da atividade continua sendo uma etapa fora do pipeline.
