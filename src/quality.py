@@ -66,6 +66,10 @@ def audit(connection: duckdb.DuckDBPyConnection, manifest: dict) -> dict:
         scalar("SELECT sum(works_count)::BIGINT FROM annual") - scalar("SELECT count(*) FROM works")))
     check("shares_in_range", scalar(
         "SELECT count(*) FROM geography WHERE share_of_collected_works NOT BETWEEN 0 AND 1"))
+    check("source_total_covers_collected_works", scalar(
+        "SELECT count(*) FROM annual WHERE source_available_works < works_count"))
+    check("collection_coverage_in_range", scalar(
+        "SELECT count(*) FROM annual WHERE collection_coverage NOT BETWEEN 0 AND 1"))
     check("oa_share_in_range", scalar(
         "SELECT count(*) FROM annual WHERE oa_share NOT BETWEEN 0 AND 1"))
     # Ausências opcionais são medidas, mas não viram zero para melhorar o relatório.
@@ -86,7 +90,8 @@ def audit(connection: duckdb.DuckDBPyConnection, manifest: dict) -> dict:
         "unmatched_institutions": [dict(zip(
             ["institution_id", "institution_name", "city", "state", "reason"], row)) for row in unmatched],
         "source_manifest": manifest,
-        "limitations": ["Recorte não probabilístico quando complete=false; não estima o total nacional.",
+        "limitations": ["Recorte não probabilístico quando complete=false; indicadores do recorte não estimam o país.",
+                        "Totais nacionais usam meta.count da API; demais indicadores usam trabalhos coletados.",
                         "Participações geográficas usam os trabalhos coletados como denominador.",
                         "Um trabalho pode contar em mais de uma localidade; totais não são somáveis.",
                         "Citações são observadas na coleta e favorecem trabalhos mais antigos.",
