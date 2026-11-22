@@ -1,0 +1,386 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "name": "schema_production",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "works_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "works_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "works_work_id_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "production_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "production_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "production_work_id_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "production_institution_id_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "annual_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "annual_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "annual_year_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "institution_annual_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "institution_annual_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "institution_annual_year_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "institution_annual_institution_id_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geography_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geography_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geography_year_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geography_level_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geography_location_id_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "topics_not_empty",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "topics_unique_key",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "topics_year_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "topics_topic_not_null",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "year_in_requested_range",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "valid_publication_date",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "non_negative_citations",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "all_works_have_brazilian_affiliation",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "municipality_unique_id",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "municipality_hierarchy_present",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "geographic_join_preserves_affiliations",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "annual_totals_match_works",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "shares_in_range",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "source_total_covers_collected_works",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "collection_coverage_in_range",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "oa_share_in_range",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "error"
+    },
+    {
+      "name": "missing_citations",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "warning"
+    },
+    {
+      "name": "missing_open_access",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "warning"
+    },
+    {
+      "name": "unmatched_geography",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "warning"
+    },
+    {
+      "name": "incomplete_collection",
+      "invalid_rows": 1,
+      "passed": false,
+      "severity": "warning"
+    },
+    {
+      "name": "institutions_not_returned",
+      "invalid_rows": 0,
+      "passed": true,
+      "severity": "warning"
+    }
+  ],
+  "tables": {
+    "works": {
+      "rows": 300,
+      "null_ratio": {
+        "work_id": 0.0,
+        "title": 0.0,
+        "year": 0.0,
+        "publication_date": 0.0,
+        "citations": 0.0,
+        "is_oa": 0.0,
+        "topic_id": 0.0,
+        "topic": 0.0,
+        "authorships": 0.0
+      }
+    },
+    "production": {
+      "rows": 591,
+      "null_ratio": {
+        "work_id": 0.0,
+        "title": 0.0,
+        "year": 0.0,
+        "publication_date": 0.0,
+        "citations": 0.0,
+        "is_oa": 0.0,
+        "topic_id": 0.0,
+        "topic": 0.0,
+        "institution_id": 0.0,
+        "institution_name": 0.0,
+        "city_source": 0.0,
+        "state_source": 0.0,
+        "municipality_id": 0.0,
+        "municipality": 0.0,
+        "state_code": 0.0,
+        "state": 0.0,
+        "region": 0.0,
+        "geo_status": 0.0
+      }
+    },
+    "annual": {
+      "rows": 3,
+      "null_ratio": {
+        "year": 0.0,
+        "works_count": 0.0,
+        "citations": 0.0,
+        "oa_known": 0.0,
+        "oa_share": 0.0,
+        "oa_count": 0.0,
+        "source_available_works": 0.0,
+        "collection_coverage": 0.0,
+        "national_growth_rate": 0.3333333333333333,
+        "sample_growth_rate": 0.3333333333333333
+      }
+    },
+    "institution_annual": {
+      "rows": 312,
+      "null_ratio": {
+        "year": 0.0,
+        "institution_id": 0.0,
+        "institution_name": 0.0,
+        "works_count": 0.0
+      }
+    },
+    "geography": {
+      "rows": 233,
+      "null_ratio": {
+        "year": 0.0,
+        "level": 0.0,
+        "location_id": 0.0,
+        "location_name": 0.0,
+        "works_count": 0.0,
+        "share_of_collected_works": 0.0
+      }
+    },
+    "topics": {
+      "rows": 270,
+      "null_ratio": {
+        "year": 0.0,
+        "topic_id": 0.0,
+        "topic": 0.0,
+        "works_count": 0.0,
+        "oa_share": 0.0
+      }
+    }
+  },
+  "duplicates_removed": 0,
+  "unmatched_institutions": [],
+  "source_manifest": {
+    "collected_at_utc": "2026-11-22T12:20:26.963274+00:00",
+    "sources": [
+      "https://api.openalex.org",
+      "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+    ],
+    "start_year": 2023,
+    "end_year": 2025,
+    "selection": "publication_date:asc; páginas limitadas por ano; recorte não probabilístico",
+    "coverage": [
+      {
+        "year": 2023,
+        "available": 297433,
+        "fetched": 100,
+        "complete": false
+      },
+      {
+        "year": 2024,
+        "available": 309317,
+        "fetched": 100,
+        "complete": false
+      },
+      {
+        "year": 2025,
+        "available": 297326,
+        "fetched": 100,
+        "complete": false
+      }
+    ],
+    "complete": false,
+    "expanded_authorships": 9,
+    "requested_institutions": 209,
+    "returned_institutions": 209,
+    "sha256": {
+      "institutions.json": "6dc61aab16597b22a931cf8279c5f6695423984379ff661c9cdae843bcbf8849",
+      "municipalities.json": "f7bf0169e81c1b9250b958cd005ac0a900997306884480512cf93c3677b6d13f",
+      "works.json": "1dff6bd960a8f2679f816435f5cdc71e47747f9a8c852a5a523124d43d236870"
+    }
+  },
+  "limitations": [
+    "Recorte não probabilístico quando complete=false; indicadores do recorte não estimam o país.",
+    "Totais nacionais usam meta.count da API; demais indicadores usam trabalhos coletados.",
+    "Participações geográficas usam os trabalhos coletados como denominador.",
+    "Um trabalho pode contar em mais de uma localidade; totais não são somáveis.",
+    "Citações são observadas na coleta e favorecem trabalhos mais antigos.",
+    "Localização da instituição não identifica o campus de cada autor."
+  ],
+  "run_id": "20261122T122318Z-9ff025",
+  "generated_at_utc": "2026-11-22T12:23:18.436992+00:00"
+}
