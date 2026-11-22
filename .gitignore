@@ -3,7 +3,5 @@ __pycache__/
 *.pyc
 .env
 .env.*
-!.env.example
 data/
-output/.staging/
 .DS_Store
