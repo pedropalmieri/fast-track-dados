@@ -16,7 +16,7 @@ class Config:
     def validate(self) -> None:
         if not 1900 <= self.start_year <= self.end_year < date.today().year:
             raise ValueError("Informe anos completos, entre 1900 e o ano anterior.")
-        if self.max_pages < 1 or not 1 <= self.per_page <= 200 or self.interval < 0:
-            raise ValueError("Páginas >= 1, tamanho entre 1 e 200 e intervalo >= 0.")
+        if self.max_pages < 1 or not 1 <= self.per_page <= 100 or self.interval < 0:
+            raise ValueError("Páginas >= 1, tamanho entre 1 e 100 e intervalo >= 0.")
         if self.max_pages > 1 and not os.getenv("OPENALEX_API_KEY"):
             raise ValueError("Mais de uma página exige OPENALEX_API_KEY no ambiente.")
