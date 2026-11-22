@@ -111,10 +111,8 @@ As versões diretas e indiretas foram fixadas com `pip freeze` no ambiente do pr
 | 1 | `.venv/`: o ambiente é recriado, não enviado ao Git |
 | 2-3 | `__pycache__/` e `*.pyc`: são arquivos gerados pelo Python |
 | 4-5 | `.env` e `.env.*`: evitam versionar arquivos locais com credenciais |
-| 6 | `!.env.example`: permite um exemplo sem segredo, caso ele seja criado no futuro |
-| 7 | `data/`: os JSONs brutos ficam locais; os resultados finais ficam em `output/` |
-| 8 | `output/.staging/`: reserva uma pasta temporária que não deve ser versionada; a versão atual não a utiliza |
-| 9 | `.DS_Store`: arquivo de organização do macOS, sem utilidade para o projeto |
+| 6 | `data/`: os JSONs brutos ficam locais; os resultados finais ficam em `output/` |
+| 7 | `.DS_Store`: arquivo de organização do macOS, sem utilidade para o projeto |
 
 O `.gitignore` não remove um segredo que já tenha sido versionado. Por isso a chave é lida do ambiente desde a coleta.
 
