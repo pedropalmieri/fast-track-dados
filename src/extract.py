@@ -62,7 +62,7 @@ def collect(config: Config, directory: Path) -> dict:
     for offset in range(0, len(ids), 50):
         page = client.get(f"{OPENALEX}/institutions", {
             **auth, "filter": "openalex_id:" + "|".join(ids[offset:offset + 50]),
-            "per_page": 200, "select": "id,display_name,country_code,geo",
+            "per_page": 50, "select": "id,display_name,country_code,geo",
         })
         institutions.extend(page["results"])
     municipalities = client.get(IBGE)
