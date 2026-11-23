@@ -23,6 +23,14 @@ Usei DuckDB porque ele roda junto com o Python, lê JSON e grava Parquet. Assim 
 | OpenAlex | Trabalhos, afiliações, localização das instituições e total do filtro por ano | [API](https://help.openalex.org/api/) |
 | IBGE | Municípios e sua ligação com UFs e regiões | [Localidades](https://servicodados.ibge.gov.br/api/docs/localidades) |
 
+## Por que usei SQL?
+
+O item 2.2 do [enunciado](desafio/FT03_Engenharia_PRJ01_Python.pdf) pede desaninhar coleções complexas usando SQL. No OpenAlex, cada trabalho tem uma lista de autores, e cada autor pode ter uma lista de instituições. Usei `json_each` no DuckDB para abrir essas listas em linhas.
+
+Depois, usei SQL para remover afiliações repetidas, converter tipos, cruzar cidade e UF com o IBGE e calcular as contagens. Por exemplo: se dois autores de um trabalho são da mesma instituição, esse trabalho deve contar uma vez para ela, não duas.
+
+Python cuida das chamadas às APIs, dos arquivos e da ordem das etapas. O SQL trata e consulta os dados depois da coleta. O DuckDB executa essas consultas dentro do programa Python, sem um servidor de banco separado. Seria possível tratar os JSONs só com Python, mas isso não atenderia ao requisito de SQL do desafio.
+
 ## O que a análise cobre
 
 A execução entregue usa 2023, 2024 e 2025. São anos encerrados, mas a base ainda pode receber correções e novos registros desses períodos.
@@ -112,7 +120,7 @@ Separei os arquivos por responsabilidade para conseguir corrigir uma etapa sem m
 5. Cruzo cidade e UF com o IBGE. Padronizo caixa e acentos e trato `Federal District` como `Distrito Federal`. Não faço aproximação por semelhança de nome.
 6. Calculo contagens por ano, instituição, localidade e tema principal, além de participação geográfica, acesso aberto, citações e variação anual.
 
-Os totais nacionais e as métricas de trabalhos são calculados antes do JOIN das afiliações. Isso evita contar o mesmo trabalho ou suas citações várias vezes.
+O total nacional vem de `meta.count` da API. Para citações e acesso aberto do recorte, uso `works`, com trabalhos distintos. Os indicadores por instituição e localidade contam trabalhos distintos em cada grupo. Assim, as várias afiliações não multiplicam as métricas de um mesmo trabalho.
 
 Um trabalho pode aparecer em mais de uma cidade ou estado. Por isso, as participações geográficas podem somar mais de 100%. A localização é da instituição cadastrada, não necessariamente do campus de cada autor. Uso o tema principal do trabalho, sem abrir todos os temas em múltiplas contagens.
 
@@ -132,7 +140,7 @@ Erros de estrutura ou consistência bloqueiam a gravação dos Parquets. Coleta 
 
 Todos os Parquets usam Snappy e pastas `year=2023`, por exemplo. `quality_report.json` fica na mesma execução. O pipeline relê os arquivos para conferir a quantidade de linhas e a compressão. Só depois atualiza `output/latest.json`.
 
-Em `annual`, `source_available_works` é o total do filtro da API e `national_growth_rate` é sua variação anual. `works_count`, `oa_share`, `citations` e `sample_growth_rate` vêm do recorte. `collection_coverage` mostra a fração coletada. As taxas ficam entre 0 e 1; multiplique por 100 para mostrar em porcentagem. Em acesso aberto, o denominador usa os trabalhos com esse campo conhecido (`oa_known`).
+Em `annual`, `source_available_works` é o total do filtro da API e `national_growth_rate` é sua variação anual. `works_count`, `oa_share`, `citations` e `sample_growth_rate` vêm do recorte. `collection_coverage` mostra a fração coletada. Cobertura e proporções ficam entre 0 e 1. Já `national_growth_rate` e `sample_growth_rate` podem ser negativas ou maiores que 1. Multiplique por 100 para mostrar em porcentagem: por exemplo, `-0.04` significa queda de 4%. Em acesso aberto, o denominador usa os trabalhos com esse campo conhecido (`oa_known`).
 
 ## Testes
 
