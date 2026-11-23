@@ -1,10 +1,10 @@
-# O que apareceu nos dados
+# O que eu encontrei nos dados
 
-Coleta feita em **22/11/2026, às 09h20, horário de Brasília**. Os arquivos desta entrega estão na execução `20261122T122318Z-9ff025`, indicada em `output/latest.json`.
+Eu fiz a coleta em **22/11/2026, às 09h20, horário de Brasília**. Mantive os arquivos da entrega na execução `20261122T122318Z-9ff025`, indicada em `output/latest.json`.
 
-## Contagem nacional informada pelo OpenAlex
+## Como eu acompanhei a contagem nacional
 
-O filtro considera trabalhos com pelo menos uma instituição brasileira. A coluna de total vem da resposta da API, não da soma dos arquivos baixados.
+Eu filtrei trabalhos com pelo menos uma instituição brasileira. Para o total de cada ano, usei a contagem informada pela API, sem somar as páginas baixadas como se fossem o país inteiro.
 
 | Ano | Total do filtro na API | Variação sobre o ano anterior | Trabalhos baixados | Cobertura da coleta |
 |---|---:|---:|---:|---:|
@@ -12,13 +12,13 @@ O filtro considera trabalhos com pelo menos uma instituição brasileira. A colu
 | 2024 | 309.317 | +4,00% | 100 | 0,0323% |
 | 2025 | 297.326 | -3,88% | 100 | 0,0336% |
 
-A contagem indexada sobe em 2024 e fica menor em 2025. Isso não basta para dizer que a pesquisa no país cresceu ou caiu na mesma proporção. A base recebe atualizações, e trabalhos mais recentes podem levar tempo para entrar. A consulta também não explica as causas dessa variação.
+Eu observei uma contagem indexada maior em 2024 e menor em 2025. Não usei essa diferença para afirmar que a pesquisa no país cresceu ou caiu na mesma proporção. Considerei que a base recebe atualizações e que trabalhos recentes podem levar tempo para entrar. Também não tenho dados para explicar as causas dessa variação.
 
-## O recorte que foi tratado
+## Qual recorte eu tratei
 
-Foram baixados **300 trabalhos**, que geraram **591 pares de trabalho e instituição**, ligados a **209 instituições brasileiras**. A listagem cortou os autores de nove trabalhos; nesses casos, foi preciso consultar o registro individual para recuperar as afiliações.
+Eu baixei **300 trabalhos** e, depois de abrir as afiliações, obtive **591 pares de trabalho e instituição**, ligados a **209 instituições brasileiras**. Consultei o registro individual de nove trabalhos para recuperar os autores cortados na listagem.
 
-A coleta pega os primeiros 100 trabalhos de cada ano por data de publicação. Ela não é uma amostra aleatória. Os resultados abaixo descrevem apenas esse recorte.
+Eu selecionei os primeiros 100 trabalhos de cada ano por data de publicação. Como não fiz uma amostra aleatória, usei os resultados abaixo apenas para descrever esse recorte.
 
 | Ano | Trabalhos | Em acesso aberto | Proporção em acesso aberto | Citações observadas na coleta |
 |---|---:|---:|---:|---:|
@@ -26,11 +26,11 @@ A coleta pega os primeiros 100 trabalhos de cada ano por data de publicação. E
 | 2024 | 100 | 93 | 93% | 10.848 |
 | 2025 | 100 | 93 | 93% | 6.585 |
 
-O campo de acesso aberto estava preenchido nos 300 trabalhos. As citações refletem o momento da consulta. Trabalhos mais antigos tiveram mais tempo para receber citações; por isso, não uso essa diferença como comparação direta de qualidade.
+Eu conferi que o campo de acesso aberto estava preenchido nos 300 trabalhos. Registrei as citações do momento da consulta e considerei que trabalhos mais antigos tiveram mais tempo para recebê-las. Por isso, não usei essa diferença como comparação direta de qualidade.
 
-### Instituições e regiões
+### O que eu encontrei nas instituições e regiões
 
-No recorte dos três anos, as maiores contagens foram USP (61 trabalhos), Unicamp (18), Fiocruz (15), UFRJ (15) e UFSCar (14). Um mesmo trabalho pode contar para mais de uma instituição.
+No recorte dos três anos, eu encontrei as maiores contagens na USP (61 trabalhos), Unicamp (18), Fiocruz (15), UFRJ (15) e UFSCar (14). Contei um mesmo trabalho em cada instituição à qual ele estava ligado.
 
 | Região | Trabalhos em 2023 | Trabalhos em 2024 | Trabalhos em 2025 |
 |---|---:|---:|---:|
@@ -40,25 +40,25 @@ No recorte dos três anos, as maiores contagens foram USP (61 trabalhos), Unicam
 | Centro-Oeste | 16 | 11 | 9 |
 | Norte | 4 | 9 | 7 |
 
-O Sudeste aparece mais nesse recorte, mas a cobertura é pequena para transformar isso em uma conclusão sobre toda a produção do país. As colunas podem somar mais de 100: um trabalho com instituições de duas regiões aparece nas duas.
+Eu encontrei mais trabalhos ligados ao Sudeste nesse recorte, mas não generalizei essa leitura para o país. Também não espero que as colunas somem 100: contei um trabalho nas duas regiões quando havia instituições das duas ligadas a ele.
 
-Os municípios e estados estão detalhados na tabela `geography`. A participação de cada localidade usa como denominador os 100 trabalhos coletados no respectivo ano.
+Eu deixei os municípios e estados detalhados na tabela `geography`. Para a participação de cada localidade, usei como denominador os 100 trabalhos coletados no respectivo ano.
 
-### Temas
+### O que eu encontrei nos temas
 
-Entre os temas principais, apareceram `Artificial Intelligence in Education` (7 trabalhos) e `Education Pedagogy and Practices` (6). Isso abre uma possibilidade de estudo sobre educação e IA, mas os números ainda são pequenos. Não dá para dizer que esses sejam os temas mais pesquisados no Brasil com base nesta coleta.
+Eu encontrei `Artificial Intelligence in Education` (7 trabalhos) e `Education Pedagogy and Practices` (6) entre os temas principais. Vejo uma possibilidade de continuar o estudo em educação e IA, mas não concluí que esses sejam os temas mais pesquisados no Brasil com base nessa coleta pequena.
 
-## Como ficou a qualidade
+## Como eu conferi a qualidade
 
-- 41 verificações: 40 passaram e uma gerou o aviso esperado de coleta parcial.
-- Nenhum trabalho repetido por ID na coleta final.
-- Nenhum par repetido de trabalho e instituição na base tratada.
-- Todos os 591 pares receberam município, UF e região.
-- Desses pares, 24 usaram a tradução explícita de `Federal District` para `Distrito Federal`; os outros 567 usaram cidade e UF sem essa tradução.
-- Os 15 arquivos Parquet foram relidos, com conferência das contagens e da compressão Snappy.
+- Executei 41 verificações: 40 passaram e uma registrou o aviso esperado de coleta parcial.
+- Não encontrei trabalhos repetidos por ID na coleta final.
+- Não encontrei pares repetidos de trabalho e instituição na base tratada.
+- Consegui associar os 591 pares a município, UF e região.
+- Usei a tradução de `Federal District` para `Distrito Federal` em 24 pares; nos outros 567, cruzei cidade e UF sem essa tradução.
+- Reli os 15 Parquets e conferi as contagens e a compressão Snappy.
 
-O relatório guarda a proporção de nulos de cada coluna. Campos opcionais, como tema principal, podem continuar ausentes; isso não é preenchido com informação inventada. Encontrar uma correspondência no IBGE também não prova que o campus do autor fica naquele município: a localização vem do cadastro da instituição.
+Eu registrei a proporção de nulos de cada coluna no relatório. Mantive os campos opcionais ausentes, como tema principal, sem inventar informação para preenchê-los. Também não considerei uma correspondência no IBGE como prova do campus do autor: usei a localização cadastrada da instituição.
 
-## Próximo passo possível
+## Por onde eu continuaria
 
-Uma continuação seria aumentar a coleta com chave própria e comparar a cobertura por ano antes de interpretar rankings ou tendências dos temas. Para falar de financiamento ou incentivos à pesquisa, seria necessária outra fonte. Os dados atuais não respondem essa pergunta.
+Eu começaria aumentando a coleta com chave própria e comparando a cobertura dos anos antes de interpretar rankings ou tendências dos temas. Para estudar financiamento ou incentivos à pesquisa, eu precisaria acrescentar uma fonte específica, porque não busquei esses dados nesta atividade.
