@@ -89,6 +89,52 @@ Os JSONs brutos ficam em `data/raw/<id-da-execucao>/`, fora do Git. Depois de um
 
 Troque `ID_DA_COLETA` pela pasta gerada no seu computador. O comando confere os hashes dos arquivos antes de usar os dados. Os brutos da entrega não estão no repositório; os Parquets finais e o relatório estão. Uma nova consulta pode trazer números diferentes porque as APIs mudam.
 
+### Transformar os brutos no Databricks SQL (piloto)
+
+O primeiro marco da migração é a tabela `production`: Python coleta os três JSONs e o manifesto; o SQL Warehouse lê os arquivos do volume, desaninha as afiliações, deduplica por trabalho e instituição e cruza cidade e UF com o IBGE. O SQL está em [sql/production_databricks.sql](sql/production_databricks.sql). O DuckDB serve como referência para comparar o resultado sobre a mesma entrada.
+
+Com as dependências de `requirements.txt`, a CLI autenticada como descrito abaixo e permissão de criar schema, volume e tabela no catálogo `workspace`, execute na raiz:
+
+```bash
+python3 -m src.piloto_databricks
+```
+
+O piloto coleta uma página de 100 trabalhos por ano de 2023 a 2025. Para usar os mesmos arquivos outra vez, passe `--from-raw data/raw/ID_DA_COLETA`. A cada execução o comando verifica os hashes locais e usa um destino novo: `/Volumes/workspace/fast_track_piloto/brutos/<id>` e a tabela Delta `workspace.fast_track_piloto.production_<id>`. A paridade exige pares únicos e compara os IDs de trabalho, instituição e município, a UF, região e o status geográfico, incluindo a multiplicidade das linhas. O resultado fica em `data/pilotos/<id>/paridade.json`.
+
+Esta etapa não publica novos Parquets nem altera as cinco views da entrega original. Os quatro agregados e a auditoria de publicação ainda usam o fluxo original.
+
+**Passo a passo da execução conferida**
+
+| Etapa | O que foi feito | Como conferir |
+|---|---|---|
+| 1. Coleta em Python | Busquei 100 trabalhos por ano (2023 a 2025), as instituições e os municípios. | Na pasta local da coleta, `manifest.json` registra a cobertura de cada ano e os hashes dos três JSONs. |
+| 2. Recebimento no Databricks | Enviei os JSONs e o manifesto para um volume separado da entrega original. | No Catalog Explorer, abra `workspace` → `fast_track_piloto` → volume `brutos` → pasta `e33804f6cb6e`. |
+| 3. Transformação em SQL | Abri autores e instituições, mantive as afiliações brasileiras e cruzei cidade e UF com o IBGE. | A tabela Delta `workspace.fast_track_piloto.production_e33804f6cb6e` tem uma linha por trabalho e instituição. |
+| 4. Comparação com a referência | Usei os mesmos brutos nos dois motores e comparei as chaves e a geografia, não apenas o total de linhas. | O relatório local `data/pilotos/e33804f6cb6e/paridade.json` registrou 592 pares, 300 trabalhos, 209 instituições e zero linhas exclusivas de cada motor. |
+
+Para conferir a contagem da etapa 3 no SQL Editor:
+
+```sql
+SELECT COUNT(*) AS pares, COUNT(DISTINCT work_id) AS trabalhos,
+       COUNT(DISTINCT institution_id) AS instituicoes
+FROM workspace.fast_track_piloto.production_e33804f6cb6e;
+```
+
+Os 592 pares pertencem à nova coleta. Os 591 pares de `workspace.fast_track_dados.production` continuam sendo a referência da entrega original. A tabela do piloto não substitui essa view, e o relatório local não é versionado.
+
+### Consultar as views no Databricks
+
+Na raiz do repositório, use Python e a Databricks CLI autenticada para ler as views de `workspace.fast_track_dados` pelo SQL Warehouse. Essa integração é opcional: não executa o ETL, não publica arquivos e não precisa de chave do OpenAlex. As views refletem a entrega carregada no volume, não uma nova execução local.
+
+```bash
+python3 -m src.consultar_views annual
+python3 -m src.consultar_views geography --ano 2025 --limite 10
+```
+
+Aceita `annual`, `production`, `institution_annual`, `geography` e `topics`. Retorna uma lista JSON com os nomes das colunas da view; a API representa valores não nulos como texto. Sem `--ano`, consulta todos os anos. O limite padrão é 20 linhas e o máximo por chamada é 100.
+
+Em uma máquina nova, instale a [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/install) e execute `databricks auth login --host https://SEU-WORKSPACE --profile fast-track`, substituindo o endereço pelo do seu workspace. Autorize no navegador; não coloque tokens no projeto. O perfil precisa poder usar o warehouse, catálogo e schema, e consultar as views. Para usar outro perfil, defina `DATABRICKS_CONFIG_PROFILE`. O comando seleciona automaticamente o único warehouse disponível; havendo vários, escolha um ID com `databricks warehouses list --profile fast-track` e defina `DATABRICKS_WAREHOUSE_ID`.
+
 ## Como organizei
 
 ```text
@@ -100,6 +146,7 @@ src/
   quality.py      verificações e avisos de qualidade
   persist.py      grava e relê os Parquets
   pipeline.py     liga as etapas e recebe os argumentos
+  consultar_views.py  consulta opcional das views publicadas no Databricks
 sql/
   transform.sql   desaninhamento, JOIN e indicadores
 docs/apis/        chamadas das APIs, exemplos JSON e regras do cruzamento
