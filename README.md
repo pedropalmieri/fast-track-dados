@@ -152,6 +152,14 @@ Os testes não chamam as APIs. Eles cobrem paginação, limite de requisições,
 
 Os problemas encontrados durante a implementação estão em [APRENDIZADOS.md](APRENDIZADOS.md).
 
+## Conferência antes da entrega
+
+Na revisão de 23/11/2026, rodei os 17 testes novamente e todos passaram. Também baixei uma cópia pública do repositório, instalei as dependências e executei `run.sh` com as duas APIs reais. O fluxo terminou com a auditoria aprovada e gerou os 15 Parquets com Snappy e partição por ano.
+
+Na consulta de hoje, os 300 trabalhos geraram 595 pares de trabalho e instituição. A coleta entregue, feita em 22/11, tem 591 pares. Mantive os arquivos de 22/11 em `output/`, porque são eles que sustentam os números de `RESULTADOS.md` e da apresentação. Fiz o teste de hoje em outra pasta para não misturar as duas execuções.
+
+Essa diferença reforça o cuidado com a origem dos dados: as fontes podem mudar entre consultas. Para conferir os números apresentados, use os Parquets indicados em `output/latest.json`. Uma nova execução testa o fluxo com os dados disponíveis naquele momento e pode trazer outros resultados. O aviso de coleta parcial continua esperado pelo limite de uma página por ano.
+
 ## Se der problema
 
 - Erro 401 ou 403: confira a chave e as regras de acesso do OpenAlex.
